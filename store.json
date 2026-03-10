@@ -195,8 +195,9 @@
       "item_type": "task",
       "status": "open",
       "priority": 2,
+      "claimed_by": "Ryan Schmidt",
       "created_at": "2026-03-10T17:06:16.674092238Z",
-      "updated_at": "2026-03-10T17:06:16.674092238Z"
+      "updated_at": "2026-03-10T17:07:18.184413975Z"
     },
     "lb-q0cl": {
       "id": "lb-q0cl",
