@@ -22,8 +22,8 @@ export function resolveMovementDirection(input) {
   // Forward = direction camera faces (yaw), projected onto XZ
   const forward_x = Math.sin(input.cameraYaw);
   const forward_z = Math.cos(input.cameraYaw);
-  const right_x = Math.cos(input.cameraYaw);
-  const right_z = -Math.sin(input.cameraYaw);
+  const right_x = -Math.cos(input.cameraYaw);
+  const right_z = Math.sin(input.cameraYaw);
 
   if (input.forward) { dx += forward_x; dz += forward_z; }
   if (input.backward) { dx -= forward_x; dz -= forward_z; }

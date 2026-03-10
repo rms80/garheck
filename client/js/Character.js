@@ -147,6 +147,10 @@ export class Character {
       case 'stomping':
         this._animateStomping();
         break;
+      case 'stompLag':
+        // Crouched landing pose — same as idle but lower
+        this.body.position.y -= 0.1;
+        break;
       case 'blocking':
         this._animateBlocking();
         break;

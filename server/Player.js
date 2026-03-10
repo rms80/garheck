@@ -146,12 +146,12 @@ export class Player {
     }
 
     // Jumping -> falling transition
-    if (this.state === 'jumping' && this.velocityY < 0) {
+    if (this.state === 'jumping' && this.velocityY <= 0) {
       this.state = 'falling';
     }
 
-    // Landing while falling
-    if (this.state === 'falling' && this.grounded) {
+    // Landing while jumping or falling
+    if ((this.state === 'jumping' || this.state === 'falling') && this.grounded) {
       this._transitionToIdle();
     }
 
@@ -196,8 +196,13 @@ export class Player {
       this.grounded = false;
     }
 
+    // Re-evaluate airborne after possible jump transition
+    // Also consider running/idle while not grounded (e.g., walked off an edge or player collision)
+    const isNowAirborne = this.state === 'jumping' || this.state === 'falling'
+      || ((this.state === 'running' || this.state === 'idle') && !this.grounded);
+
     // Attack - air stomp (check before ground punch so airborne attacks become stomps)
-    if (input.attack && isAirborne && this.state !== 'stomping') {
+    if (input.attack && isNowAirborne && this.state !== 'stomping') {
       this.state = 'stomping';
       this.velocityY = STOMP_VELOCITY;
       this.stompHasHit = false;
