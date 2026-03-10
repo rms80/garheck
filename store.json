@@ -69,6 +69,15 @@
       "created_at": "2026-03-10T16:41:08.415460597Z",
       "updated_at": "2026-03-10T16:41:08.415460597Z"
     },
+    "lb-fuwi": {
+      "id": "lb-fuwi",
+      "title": "Camera.js - third-person camera with pointer lock",
+      "item_type": "task",
+      "status": "open",
+      "priority": 1,
+      "created_at": "2026-03-10T16:41:08.426667351Z",
+      "updated_at": "2026-03-10T16:41:08.426667351Z"
+    },
     "lb-q0cl": {
       "id": "lb-q0cl",
       "title": "Renderer.js - Three.js scene, arena mesh, lighting",
@@ -147,6 +156,11 @@
     },
     {
       "from_id": "lb-cm8g",
+      "to_id": "lb-5f7k",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-fuwi",
       "to_id": "lb-5f7k",
       "dep_type": "parent"
     }
