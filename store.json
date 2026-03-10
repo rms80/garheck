@@ -139,11 +139,10 @@
       "id": "lb-tzgo",
       "title": "client/js/Input.js - keyboard/mouse input",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:43:10.255175721Z",
-      "updated_at": "2026-03-10T16:43:14.870968698Z"
+      "updated_at": "2026-03-10T16:46:21.671530454Z"
     },
     "lb-vdeu": {
       "id": "lb-vdeu",
