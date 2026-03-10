@@ -150,11 +150,10 @@
       "id": "lb-vdeu",
       "title": "shared/Physics.js - core physics simulation",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:43:10.221186059Z",
-      "updated_at": "2026-03-10T16:43:14.723980247Z"
+      "updated_at": "2026-03-10T16:46:21.636151501Z"
     },
     "lb-vx3n": {
       "id": "lb-vx3n",
