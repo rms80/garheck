@@ -109,11 +109,10 @@
       "id": "lb-fu6a",
       "title": "Verify and fix any integration bugs",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:50:20.006423737Z",
-      "updated_at": "2026-03-10T16:50:24.578075513Z"
+      "updated_at": "2026-03-10T16:51:19.220501074Z"
     },
     "lb-fuwi": {
       "id": "lb-fuwi",
