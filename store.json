@@ -347,6 +347,11 @@
       "dep_type": "parent"
     },
     {
+      "from_id": "lb-ni45",
+      "to_id": "lb-qfu6",
+      "dep_type": "parent"
+    },
+    {
       "from_id": "lb-q0cl",
       "to_id": "lb-5f7k",
       "dep_type": "parent"
@@ -369,11 +374,6 @@
     {
       "from_id": "lb-ya3y",
       "to_id": "lb-0dhz",
-      "dep_type": "parent"
-    },
-    {
-      "from_id": "lb-ni45",
-      "to_id": "lb-qfu6",
       "dep_type": "parent"
     }
   ]
