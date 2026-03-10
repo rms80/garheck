@@ -80,6 +80,16 @@
       "created_at": "2026-03-10T16:38:37.334754774Z",
       "updated_at": "2026-03-10T16:38:37.334754774Z"
     },
+    "lb-vx3n": {
+      "id": "lb-vx3n",
+      "title": "Create client HTML, CSS, main.js, Network.js",
+      "description": "index.html with import map, style.css, main.js entry point, Network.js WebSocket wrapper",
+      "item_type": "task",
+      "status": "open",
+      "priority": 1,
+      "created_at": "2026-03-10T16:38:44.753998376Z",
+      "updated_at": "2026-03-10T16:38:44.753998376Z"
+    },
     "lb-x2aj": {
       "id": "lb-x2aj",
       "title": "Phase 5: Game Flow",
@@ -104,6 +114,11 @@
     },
     {
       "from_id": "lb-85uo",
+      "to_id": "lb-qrb1",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-vx3n",
       "to_id": "lb-qrb1",
       "dep_type": "parent"
     }
