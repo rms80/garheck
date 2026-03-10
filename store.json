@@ -114,6 +114,15 @@
       "created_at": "2026-03-10T16:43:10.266460711Z",
       "updated_at": "2026-03-10T16:46:21.683144752Z"
     },
+    "lb-lwui": {
+      "id": "lb-lwui",
+      "title": "Wire combat into Game.js and Player.js",
+      "item_type": "task",
+      "status": "open",
+      "priority": 1,
+      "created_at": "2026-03-10T16:46:29.220746113Z",
+      "updated_at": "2026-03-10T16:46:29.220746113Z"
+    },
     "lb-q0cl": {
       "id": "lb-q0cl",
       "title": "Renderer.js - Three.js scene, arena mesh, lighting",
@@ -259,6 +268,11 @@
     },
     {
       "from_id": "lb-dgow",
+      "to_id": "lb-0m3n",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-lwui",
       "to_id": "lb-0m3n",
       "dep_type": "parent"
     }
