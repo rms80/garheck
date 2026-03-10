@@ -193,11 +193,10 @@
       "title": "Camera wall collision doesn't prevent clipping in typical cases",
       "description": "The wall collision in Camera.js checks if the camera XZ position is within 0.5 units of a wall segment edge (2D point-to-segment distance). This fails for the typical case where the player is near the middle of a wall face: e.g., player at (19.6,0,0), ideal camera at (24.6,0,0) - nearest wall segment point is vertex (20,0), distance 4.6 units, so the 0.5 threshold is never triggered and camera clips through. Spec (Section 6.2) requires a raycast from look-at point to ideal camera position; if the ray intersects a wall segment, clamp camera distance to the hit distance minus a small margin. Fix: implement 2D ray-segment intersection in _processWallCollision and replace the current proximity check.",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 2,
-      "claimed_by": "Ryan Schmidt",
       "created_at": "2026-03-10T17:06:16.674092238Z",
-      "updated_at": "2026-03-10T17:07:18.184413975Z"
+      "updated_at": "2026-03-10T17:08:55.795575643Z"
     },
     "lb-q0cl": {
       "id": "lb-q0cl",
