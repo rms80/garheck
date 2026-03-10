@@ -94,11 +94,10 @@
       "id": "lb-q0cl",
       "title": "Renderer.js - Three.js scene, arena mesh, lighting",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:41:08.403946858Z",
-      "updated_at": "2026-03-10T16:41:12.594738044Z"
+      "updated_at": "2026-03-10T16:43:02.162643532Z"
     },
     "lb-qfu6": {
       "id": "lb-qfu6",
