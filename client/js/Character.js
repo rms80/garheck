@@ -270,8 +270,10 @@ export class Character {
   }
 
   _animateFalling() {
-    this.leftArm.rotation.z = -Math.PI / 4;
-    this.rightArm.rotation.z = Math.PI / 4;
+    this.leftLeg.rotation.x = -Math.PI / 4;
+    this.rightLeg.rotation.x = -Math.PI / 4;
+    this.leftArm.rotation.x = -Math.PI / 8;
+    this.rightArm.rotation.x = -Math.PI / 8;
   }
 
   _animateAttacking(stateTimer) {

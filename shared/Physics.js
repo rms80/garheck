@@ -93,11 +93,9 @@ export function simulatePlayer(player, input, dt) {
     player.grounded = false;
   }
 
-  // Update facing direction based on movement
-  if (Math.abs(intentionalVelX) > 0.01 || Math.abs(intentionalVelZ) > 0.01) {
-    const targetYaw = Math.atan2(intentionalVelX, intentionalVelZ);
-    // Smooth rotation interpolation
-    player.yaw = lerpAngle(player.yaw, targetYaw, 10 * dt);
+  // Face camera direction (allows strafing with A/D)
+  if (canMove) {
+    player.yaw = lerpAngle(player.yaw, input.cameraYaw, 10 * dt);
   }
 
   // Wall collision
