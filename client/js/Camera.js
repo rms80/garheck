@@ -6,6 +6,7 @@ import {
   CAMERA_MIN_PITCH, CAMERA_MAX_PITCH,
   PLAYER_HEIGHT
 } from '/shared/constants.js';
+import { computeWallSegments } from '/shared/Arena.js';
 
 export class Camera {
   constructor(canvas) {
@@ -21,6 +22,10 @@ export class Camera {
     this.pitch = 0.3; // Start looking slightly down
     this.distance = CAMERA_DEFAULT_DISTANCE;
     this.pointerLocked = false;
+
+    // For wall collision raycasting
+    this._raycaster = new THREE.Raycaster();
+    this._wallSegments = computeWallSegments();
 
     this._setupPointerLock();
     this._setupMouseInput();
@@ -89,16 +94,64 @@ export class Camera {
   update(playerX, playerY, playerZ) {
     const charHeight = PLAYER_HEIGHT;
 
-    // Camera position from formula in spec
-    const camX = playerX - this.distance * Math.sin(this.yaw) * Math.cos(this.pitch);
-    const camY = playerY + charHeight + this.distance * Math.sin(this.pitch);
-    const camZ = playerZ - this.distance * Math.cos(this.yaw) * Math.cos(this.pitch);
+    // Ideal camera position from formula in spec
+    let camX = playerX - this.distance * Math.sin(this.yaw) * Math.cos(this.pitch);
+    let camY = playerY + charHeight + this.distance * Math.sin(this.pitch);
+    let camZ = playerZ - this.distance * Math.cos(this.yaw) * Math.cos(this.pitch);
+
+    // Look-at point
+    const lookX = playerX;
+    const lookY = playerY + charHeight * 0.75;
+    const lookZ = playerZ;
+
+    // Wall collision: raycast from look-at to ideal camera position
+    const dirX = camX - lookX;
+    const dirY = camY - lookY;
+    const dirZ = camZ - lookZ;
+    const dirLen = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+
+    if (dirLen > 0.01) {
+      // Simple wall collision using arena wall segments
+      // Check if camera is outside arena bounds on XZ plane
+      let clampedDist = this.distance;
+      for (const seg of this._wallSegments) {
+        // Check if camera ray intersects wall plane
+        const wallDist = this._pointToSegmentDist(camX, camZ, seg.ax, seg.az, seg.bx, seg.bz);
+        if (wallDist < 0.5) {
+          // Camera too close to wall, pull it in
+          const pullFactor = Math.max(0.3, wallDist / 0.5);
+          clampedDist = Math.min(clampedDist, this.distance * pullFactor);
+        }
+      }
+
+      if (clampedDist < this.distance) {
+        camX = playerX - clampedDist * Math.sin(this.yaw) * Math.cos(this.pitch);
+        camY = playerY + charHeight + clampedDist * Math.sin(this.pitch);
+        camZ = playerZ - clampedDist * Math.cos(this.yaw) * Math.cos(this.pitch);
+      }
+    }
+
+    // Clamp camera Y above ground
+    camY = Math.max(0.5, camY);
 
     this.camera.position.set(camX, camY, camZ);
+    this.camera.lookAt(lookX, lookY, lookZ);
+  }
 
-    // Look at point
-    const lookY = playerY + charHeight * 0.75;
-    this.camera.lookAt(playerX, lookY, playerZ);
+  _pointToSegmentDist(px, pz, ax, az, bx, bz) {
+    const abx = bx - ax;
+    const abz = bz - az;
+    const apx = px - ax;
+    const apz = pz - az;
+    const dot = apx * abx + apz * abz;
+    const lenSq = abx * abx + abz * abz;
+    let t = lenSq > 0 ? dot / lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    const closestX = ax + t * abx;
+    const closestZ = az + t * abz;
+    const dx = px - closestX;
+    const dz = pz - closestZ;
+    return Math.sqrt(dx * dx + dz * dz);
   }
 
   getYaw() {
