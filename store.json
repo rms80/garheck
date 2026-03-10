@@ -30,6 +30,15 @@
       "created_at": "2026-03-10T16:38:44.731177866Z",
       "updated_at": "2026-03-10T16:39:35.283820126Z"
     },
+    "lb-44kg": {
+      "id": "lb-44kg",
+      "title": "Wire up rendering in main.js",
+      "item_type": "task",
+      "status": "open",
+      "priority": 1,
+      "created_at": "2026-03-10T16:41:08.438049649Z",
+      "updated_at": "2026-03-10T16:41:08.438049649Z"
+    },
     "lb-5f7k": {
       "id": "lb-5f7k",
       "title": "Phase 2: Rendering",
@@ -161,6 +170,11 @@
     },
     {
       "from_id": "lb-fuwi",
+      "to_id": "lb-5f7k",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-44kg",
       "to_id": "lb-5f7k",
       "dep_type": "parent"
     }
