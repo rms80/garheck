@@ -18,7 +18,7 @@ export const AIR_CONTROL_FACTOR = 0.6;
 export const KNOCKBACK_FRICTION = 8.0;       // per second decay rate for knockback velocity
 
 export const PLAYER_MAX_HP = 100;
-export const PUNCH_DAMAGE = 15;
+export const PUNCH_DAMAGE = 10;
 export const PUNCH_WINDUP = 0.05;
 export const PUNCH_ACTIVE = 0.1;
 export const PUNCH_RECOVERY = 0.15;
@@ -29,7 +29,7 @@ export const PUNCH_KNOCKBACK_Y = 3;
 export const PUNCH_HITSTUN = 0.3;
 
 export const STOMP_VELOCITY = -15;
-export const STOMP_DAMAGE = 20;
+export const STOMP_DAMAGE = 15;
 export const STOMP_HITBOX_RADIUS = 0.6;
 export const STOMP_KNOCKBACK_XZ = 8;
 export const STOMP_HITSTUN = 0.5;

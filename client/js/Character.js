@@ -1,5 +1,9 @@
 // client/js/Character.js
 import * as THREE from 'three';
+import { SimplifyModifier } from 'three/addons/modifiers/SimplifyModifier.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const simplifier = new SimplifyModifier();
 
 const P1_COLOR = 0xe74c3c;
 const P2_COLOR = 0x3498db;
@@ -80,9 +84,9 @@ export class Character {
     this.color = playerId === 0 ? P1_COLOR : P2_COLOR;
     const baseColor = this.color;
 
-    const bodyMat = new THREE.MeshLambertMaterial({ color: baseColor });
-    const headMat = new THREE.MeshLambertMaterial({ color: lighten(baseColor, 0.15) });
-    const limbMat = new THREE.MeshLambertMaterial({ color: darken(baseColor, 0.1) });
+    const bodyMat = new THREE.MeshLambertMaterial({ color: baseColor, side: THREE.DoubleSide, flatShading: true });
+    const headMat = new THREE.MeshLambertMaterial({ color: lighten(baseColor, 0.15), side: THREE.DoubleSide, flatShading: true });
+    const limbMat = new THREE.MeshLambertMaterial({ color: darken(baseColor, 0.1), side: THREE.DoubleSide, flatShading: true });
 
     this.group = new THREE.Group();
 
@@ -118,6 +122,21 @@ export class Character {
     this.rightLeg = createPartMesh(capsuleToMeshGeometry(0.1, 0.3, 8, 12, 'top'), limbMat);
     this.rightLeg.position.set(0.15, 0.5, 0);
     this.group.add(this.rightLeg);
+
+    // Store original geometries in merged (indexed) form for simplification
+    this._simplifyParts = ['head', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+    this._originalIndexed = {};
+    this._originalGeometries = {};
+    for (const name of this._simplifyParts) {
+      this._originalGeometries[name] = this[name].geometry.clone();
+      // Strip normals before merge so only positions are compared
+      const forMerge = this[name].geometry.clone();
+      forMerge.deleteAttribute('normal');
+      const indexed = mergeVertices(forMerge);
+      indexed.computeVertexNormals();
+      forMerge.dispose();
+      this._originalIndexed[name] = indexed;
+    }
 
     // Store materials for effects
     this.materials = [bodyMat, headMat, limbMat];
@@ -306,6 +325,55 @@ export class Character {
     this.rightArm.position.y = 0.5;
     this.leftLeg.position.y = 0.2;
     this.rightLeg.position.y = 0.2;
+  }
+
+  /**
+   * Simplify parts based on remaining health percentage (0-100).
+   * At 100 HP = original mesh, at 0 HP = maximally simplified.
+   */
+  simplifyByHealth(hp, maxHp) {
+    const healthPct = Math.max(0, Math.min(1, hp / maxHp));
+    // Linear but compressed: 50% HP → 50% removed, 5% HP → 100% removed
+    const removeFraction = Math.min(1, (1 - healthPct) / 0.95);
+
+    for (const name of this._simplifyParts) {
+      const mesh = this[name];
+      const indexed = this._originalIndexed[name].clone();
+      const vertCount = indexed.attributes.position.count;
+      const removeCount = Math.floor(vertCount * removeFraction);
+
+      if (removeCount < 1) {
+        // Full health — restore original
+        mesh.geometry.dispose();
+        mesh.geometry = this._originalGeometries[name].clone();
+        indexed.dispose();
+        continue;
+      }
+
+      if (vertCount - removeCount < 4) {
+        indexed.dispose();
+        continue;
+      }
+
+      try {
+        const simplified = simplifier.modify(indexed, removeCount);
+        indexed.dispose();
+        if (simplified.attributes.position.count < 3) continue;
+        simplified.computeVertexNormals();
+        mesh.geometry.dispose();
+        mesh.geometry = simplified;
+      } catch (e) {
+        indexed.dispose();
+        console.warn(`Failed to simplify ${name}:`, e);
+      }
+    }
+  }
+
+  resetGeometries() {
+    for (const name of this._simplifyParts) {
+      this[name].geometry.dispose();
+      this[name].geometry = this._originalGeometries[name].clone();
+    }
   }
 
   setIframeBlink(iframesRemaining) {

@@ -102,6 +102,10 @@ network.on('event', (msg) => {
       // Reset play again button
       playAgainBtn.textContent = 'Play Again';
       playAgainBtn.disabled = false;
+      // Restore meshes to original
+      for (const ch of characters) {
+        if (ch) ch.resetGeometries();
+      }
       break;
 
     case 'roundStart':
@@ -144,6 +148,9 @@ network.on('event', (msg) => {
       if (target) {
         const hitColor = event.targetId === 0 ? 0xe74c3c : 0x3498db;
         particles.spawnHit(target.x, target.y + 1.0, target.z, hitColor);
+      }
+      if (characters[event.targetId] && target) {
+        characters[event.targetId].simplifyByHealth(target.hp, 100);
       }
       break;
     }
