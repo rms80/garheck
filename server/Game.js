@@ -1,5 +1,6 @@
 // server/Game.js
 import { Player } from './Player.js';
+import { processCombat } from './Combat.js';
 import { simulatePlayer, resolvePlayerCollision } from '../shared/Physics.js';
 import {
   TICK_DURATION, SEND_INTERVAL, TICK_RATE
@@ -85,13 +86,31 @@ export class Game {
     // 10. Player-vs-player collision
     resolvePlayerCollision(this.players[0], this.players[1]);
 
-    // 11. Combat (will be added in Phase 4)
+    // 11. Combat: check both players attacking
+    const events0 = processCombat(this.players[0], this.players[1]);
+    const events1 = processCombat(this.players[1], this.players[0]);
+    const allEvents = [...events0, ...events1];
 
-    // 12. Check HP for round end (will be added in Phase 5)
+    // Broadcast combat events
+    for (const event of allEvents) {
+      this._broadcastEvent(event);
+    }
+
+    // 12. Check HP for round end (will be expanded in Phase 5)
 
     // 13. Broadcast state at SEND_RATE
     if (this.tickCount % SEND_INTERVAL === 0) {
       this._broadcastState();
+    }
+  }
+
+  _broadcastEvent(event) {
+    const msg = JSON.stringify({ type: 'event', event });
+    for (let i = 0; i < 2; i++) {
+      const ws = this.connections[i];
+      if (ws && ws.readyState === 1) {
+        ws.send(msg);
+      }
     }
   }
 
