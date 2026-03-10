@@ -1,6 +1,7 @@
 // server/Player.js
 import {
   PLAYER_MAX_HP, MAX_INPUT_QUEUE,
+  PLAYER_JUMP_VELOCITY,
   PUNCH_WINDUP, PUNCH_ACTIVE, PUNCH_RECOVERY,
   STOMP_VELOCITY, STOMP_MISS_LAG,
   IFRAMES_DURATION, PARRY_WINDOW
@@ -40,6 +41,9 @@ export class Player {
 
     // Stomp tracking
     this.stompHasHit = false;
+
+    // Punch tracking (used by Combat.js)
+    this._punchHitThisCycle = false;
 
     // Current input
     this.currentInput = {
@@ -188,7 +192,7 @@ export class Player {
     // Jump
     if (input.jump && canAct && this.grounded) {
       this.state = 'jumping';
-      this.velocityY = 10; // PLAYER_JUMP_VELOCITY
+      this.velocityY = PLAYER_JUMP_VELOCITY;
       this.grounded = false;
     }
 

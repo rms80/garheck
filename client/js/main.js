@@ -97,6 +97,9 @@ network.on('event', (msg) => {
       countdownScreen.style.display = 'flex';
       countdownText.textContent = event.value;
       hud.style.display = 'block';
+      // Reset play again button
+      playAgainBtn.textContent = 'Play Again';
+      playAgainBtn.disabled = false;
       break;
 
     case 'roundStart':
