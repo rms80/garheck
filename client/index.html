@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arena Brawl</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.162.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="overlay">
+    <div id="titleScreen" class="screen">
+      <h1>ARENA BRAWL</h1>
+      <p id="connectionStatus">Connecting...</p>
+    </div>
+
+    <div id="waitingScreen" class="screen" style="display:none">
+      <h2>Waiting for opponent<span id="waitingDots">...</span></h2>
+    </div>
+
+    <div id="countdownScreen" class="screen" style="display:none">
+      <h1 id="countdownText"></h1>
+    </div>
+
+    <div id="pauseScreen" class="screen" style="display:none">
+      <h2>PAUSED</h2>
+      <p>Click to Resume</p>
+    </div>
+
+    <div id="roundEndScreen" class="screen" style="display:none">
+      <h2 id="roundEndText"></h2>
+    </div>
+
+    <div id="matchEndScreen" class="screen" style="display:none">
+      <h1 id="matchEndText"></h1>
+      <p id="matchEndScore"></p>
+      <button id="playAgainBtn">Play Again</button>
+    </div>
+
+    <div id="fullMessage" class="screen" style="display:none">
+      <h2>Game in progress — try again later.</h2>
+    </div>
+  </div>
+
+  <div id="hud" style="display:none">
+    <div id="hudTop">
+      <div class="hp-container hp-left">
+        <span class="hp-label">Player 1</span>
+        <div class="hp-bar">
+          <div id="hp1" class="hp-fill hp-red"></div>
+        </div>
+        <span id="hp1Text" class="hp-text">100</span>
+      </div>
+      <div id="roundInfo">
+        <span id="roundText">Round 1</span>
+        <span id="timerText">1:30</span>
+      </div>
+      <div class="hp-container hp-right">
+        <span class="hp-label">Player 2</span>
+        <div class="hp-bar">
+          <div id="hp2" class="hp-fill hp-blue"></div>
+        </div>
+        <span id="hp2Text" class="hp-text">100</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #000;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #fff;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Overlay container */
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+}
+
+.screen h1 {
+  font-size: 4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 1rem;
+}
+
+.screen h2 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.screen p {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+#countdownText {
+  font-size: 8rem;
+  font-weight: bold;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+}
+
+#playAgainBtn {
+  margin-top: 2rem;
+  padding: 1rem 3rem;
+  font-size: 1.5rem;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#playAgainBtn:hover {
+  background: #c0392b;
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#hudTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 15px 20px;
+}
+
+.hp-container {
+  display: flex;
+  flex-direction: column;
+  width: 30%;
+}
+
+.hp-label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.hp-bar {
+  height: 20px;
+  background: #333;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.hp-red { background: #e74c3c; }
+.hp-blue { background: #3498db; }
+
+.hp-text {
+  font-size: 0.8rem;
+  margin-top: 2px;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.hp-right {
+  text-align: right;
+}
+
+.hp-right .hp-fill {
+  float: right;
+}
+
+#roundInfo {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#roundText {
+  font-size: 1rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
+
+#timerText {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
