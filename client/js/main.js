@@ -5,6 +5,7 @@ import { Character } from './Character.js';
 import { Camera } from './Camera.js';
 import { Input } from './Input.js';
 import { Prediction } from './Prediction.js';
+import { HUD } from './HUD.js';
 
 // Init renderer
 const canvas = document.getElementById('gameCanvas');
@@ -19,17 +20,21 @@ characters[1].setRotation(-Math.PI / 2);
 characters[0].addToScene(renderer.scene);
 characters[1].addToScene(renderer.scene);
 
-// Camera, input, network, prediction
+// Camera, input, network, prediction, HUD
 const camera = new Camera(canvas);
 const input = new Input();
 const network = new Network();
 const prediction = new Prediction();
+const hudManager = new HUD();
 
 // Game state
 let gameActive = false;
 let myPlayerId = null;
+let roundTimer = 90;
+let currentRound = 1;
+let scores = [0, 0];
 
-// Player states (fallback before server data arrives)
+// Player states
 const playerStates = [
   { x: -8, y: 0, z: 0, yaw: Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0, hp: 100 },
   { x: 8, y: 0, z: 0, yaw: -Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0, hp: 100 },
@@ -44,6 +49,12 @@ const connectionStatus = document.getElementById('connectionStatus');
 const fullMessage = document.getElementById('fullMessage');
 const pauseScreen = document.getElementById('pauseScreen');
 const hud = document.getElementById('hud');
+const roundEndScreen = document.getElementById('roundEndScreen');
+const roundEndText = document.getElementById('roundEndText');
+const matchEndScreen = document.getElementById('matchEndScreen');
+const matchEndText = document.getElementById('matchEndText');
+const matchEndScore = document.getElementById('matchEndScore');
+const playAgainBtn = document.getElementById('playAgainBtn');
 
 function hideAllScreens() {
   titleScreen.style.display = 'none';
@@ -51,6 +62,8 @@ function hideAllScreens() {
   countdownScreen.style.display = 'none';
   fullMessage.style.display = 'none';
   pauseScreen.style.display = 'none';
+  roundEndScreen.style.display = 'none';
+  matchEndScreen.style.display = 'none';
 }
 
 // Handle lobby messages
@@ -58,8 +71,6 @@ network.on('lobby', (msg) => {
   console.log('Lobby:', msg);
   myPlayerId = msg.playerId;
   network.playerId = msg.playerId;
-
-  // Set initial camera yaw based on player ID
   camera.yaw = myPlayerId === 0 ? Math.PI / 2 : -Math.PI / 2;
 
   if (msg.status === 'waiting') {
@@ -80,19 +91,64 @@ network.on('event', (msg) => {
   const event = msg.event;
   console.log('Event:', event);
 
-  if (event.kind === 'countdown') {
-    hideAllScreens();
-    countdownScreen.style.display = 'flex';
-    countdownText.textContent = event.value;
-  } else if (event.kind === 'roundStart') {
-    countdownText.textContent = 'FIGHT!';
-    gameActive = true;
-    camera.setGameActive(true);
-    hud.style.display = 'block';
-    setTimeout(() => {
-      countdownScreen.style.display = 'none';
-      canvas.requestPointerLock();
-    }, 1000);
+  switch (event.kind) {
+    case 'countdown':
+      hideAllScreens();
+      countdownScreen.style.display = 'flex';
+      countdownText.textContent = event.value;
+      hud.style.display = 'block';
+      break;
+
+    case 'roundStart':
+      hideAllScreens();
+      countdownScreen.style.display = 'flex';
+      countdownText.textContent = 'FIGHT!';
+      gameActive = true;
+      camera.setGameActive(true);
+      hud.style.display = 'block';
+      setTimeout(() => {
+        countdownScreen.style.display = 'none';
+        canvas.requestPointerLock();
+      }, 1000);
+      break;
+
+    case 'roundEnd':
+      gameActive = false;
+      scores = event.scores;
+      if (event.winnerId >= 0) {
+        roundEndText.textContent = `Player ${event.winnerId + 1} wins the round!`;
+      } else {
+        roundEndText.textContent = 'Draw!';
+      }
+      roundEndScreen.style.display = 'flex';
+      break;
+
+    case 'matchEnd':
+      gameActive = false;
+      camera.setGameActive(false);
+      document.exitPointerLock();
+      hideAllScreens();
+      matchEndText.textContent = `Player ${event.winnerId + 1} WINS!`;
+      matchEndScore.textContent = `Score: ${event.scores[0]} - ${event.scores[1]}`;
+      matchEndScreen.style.display = 'flex';
+      break;
+
+    case 'hit':
+      console.log(`Player ${event.attackerId} hit Player ${event.targetId} for ${event.damage} damage (${event.attackType})`);
+      break;
+
+    case 'parry':
+      console.log(`Player ${event.targetId} parried Player ${event.attackerId}!`);
+      break;
+
+    case 'playAgainWaiting':
+      playAgainBtn.textContent = 'Waiting for opponent...';
+      playAgainBtn.disabled = true;
+      break;
+
+    case 'disconnect':
+      console.log(`Player ${event.playerId} disconnected`);
+      break;
   }
 });
 
@@ -100,20 +156,29 @@ network.on('event', (msg) => {
 network.on('state', (msg) => {
   if (myPlayerId === null) return;
 
+  // Update round info
+  if (msg.roundTimer !== undefined) roundTimer = msg.roundTimer;
+  if (msg.currentRound !== undefined) currentRound = msg.currentRound;
+  if (msg.scores !== undefined) scores = msg.scores;
+
   for (const p of msg.players) {
+    playerStates[p.id] = p;
     if (p.id === myPlayerId) {
-      // Reconcile own player
       prediction.reconcile(p, msg.lastProcessedSeq);
     } else {
-      // Opponent interpolation
       prediction.addOpponentSnapshot(p);
     }
-    // Always update playerStates for HUD etc.
-    playerStates[p.id] = p;
   }
 });
 
-// Prevent context menu on right-click
+// Play Again button
+playAgainBtn.addEventListener('click', () => {
+  network.sendPlayAgain();
+  playAgainBtn.textContent = 'Waiting for opponent...';
+  playAgainBtn.disabled = true;
+});
+
+// Prevent context menu
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // Render loop
@@ -121,71 +186,38 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 
   if (gameActive && myPlayerId !== null) {
-    // Capture input and send to server
     const inputState = input.getState(camera.getYaw());
     const seq = prediction.processInput(inputState);
     network.sendInput(seq, inputState);
   }
 
-  // Get display states
+  // Update character visuals
   if (myPlayerId !== null) {
-    // Own player: use prediction
     const localState = prediction.localState;
     if (localState) {
       characters[myPlayerId].setPosition(localState.x, localState.y, localState.z);
       characters[myPlayerId].setRotation(localState.yaw);
-      characters[myPlayerId].updateAnimation(
-        localState.state || 'idle',
-        localState.stateTimer || 0,
-        1 / 60
-      );
+      characters[myPlayerId].updateAnimation(localState.state || 'idle', localState.stateTimer || 0, 1 / 60);
       characters[myPlayerId].setIframeBlink(localState.iframesRemaining || 0);
-
-      // Camera follows our player
       camera.update(localState.x, localState.y, localState.z);
     }
 
-    // Opponent: use interpolation
     const opponentId = 1 - myPlayerId;
-    const oppState = prediction.getOpponentState();
+    const oppState = prediction.getOpponentState() || playerStates[opponentId];
     if (oppState) {
       characters[opponentId].setPosition(oppState.x, oppState.y, oppState.z);
       characters[opponentId].setRotation(oppState.yaw);
-      characters[opponentId].updateAnimation(
-        oppState.state || 'idle',
-        oppState.stateTimer || 0,
-        1 / 60
-      );
+      characters[opponentId].updateAnimation(oppState.state || 'idle', oppState.stateTimer || 0, 1 / 60);
       characters[opponentId].setIframeBlink(oppState.iframesRemaining || 0);
-    } else {
-      // Fallback: use raw server state
-      const ps = playerStates[opponentId];
-      characters[opponentId].setPosition(ps.x, ps.y, ps.z);
-      characters[opponentId].setRotation(ps.yaw);
-      characters[opponentId].updateAnimation(ps.state, ps.stateTimer || 0, 1 / 60);
     }
   }
 
   // Update HUD
-  updateHUD();
+  hudManager.updateHP(playerStates[0].hp, playerStates[1].hp);
+  hudManager.updateRound(currentRound, scores);
+  hudManager.updateTimer(roundTimer);
 
   renderer.render(camera.camera);
-}
-
-function updateHUD() {
-  const hp1 = document.getElementById('hp1');
-  const hp2 = document.getElementById('hp2');
-  const hp1Text = document.getElementById('hp1Text');
-  const hp2Text = document.getElementById('hp2Text');
-
-  if (hp1 && playerStates[0]) {
-    hp1.style.width = `${playerStates[0].hp}%`;
-    hp1Text.textContent = `${Math.ceil(playerStates[0].hp)}`;
-  }
-  if (hp2 && playerStates[1]) {
-    hp2.style.width = `${playerStates[1].hp}%`;
-    hp2Text.textContent = `${Math.ceil(playerStates[1].hp)}`;
-  }
 }
 
 // Start

@@ -93,19 +93,8 @@ function startGame() {
   for (let i = 0; i < 2; i++) {
     game.setConnection(i, wsConnections[i]);
   }
-
-  // Countdown sequence
-  let count = 3;
-  const interval = setInterval(() => {
-    if (count > 0) {
-      broadcast({ type: 'event', event: { kind: 'countdown', value: count } });
-      count--;
-    } else {
-      clearInterval(interval);
-      broadcast({ type: 'event', event: { kind: 'roundStart' } });
-      game.start();
-    }
-  }, 1000);
+  // Game handles its own countdown and tick loop
+  game.startMatch();
 }
 
 function cleanupSession() {
@@ -158,6 +147,8 @@ wss.on('connection', (ws) => {
       const msg = JSON.parse(data);
       if (msg.type === 'input' && game) {
         game.queueInput(playerId, msg.keys, msg.seq);
+      } else if (msg.type === 'playAgain' && game) {
+        game.handlePlayAgain(playerId);
       }
     } catch (e) {
       // Silently ignore malformed messages
