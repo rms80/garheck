@@ -74,11 +74,10 @@
       "id": "lb-cm8g",
       "title": "Character.js - procedural character mesh hierarchy",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:41:08.415460597Z",
-      "updated_at": "2026-03-10T16:41:12.648824791Z"
+      "updated_at": "2026-03-10T16:43:02.174903550Z"
     },
     "lb-fuwi": {
       "id": "lb-fuwi",
