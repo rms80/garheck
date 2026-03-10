@@ -144,6 +144,11 @@
       "dep_type": "parent"
     },
     {
+      "from_id": "lb-44kg",
+      "to_id": "lb-5f7k",
+      "dep_type": "parent"
+    },
+    {
       "from_id": "lb-85uo",
       "to_id": "lb-qrb1",
       "dep_type": "parent"
@@ -151,16 +156,6 @@
     {
       "from_id": "lb-8uig",
       "to_id": "lb-qrb1",
-      "dep_type": "parent"
-    },
-    {
-      "from_id": "lb-vx3n",
-      "to_id": "lb-qrb1",
-      "dep_type": "parent"
-    },
-    {
-      "from_id": "lb-q0cl",
-      "to_id": "lb-5f7k",
       "dep_type": "parent"
     },
     {
@@ -174,8 +169,13 @@
       "dep_type": "parent"
     },
     {
-      "from_id": "lb-44kg",
+      "from_id": "lb-q0cl",
       "to_id": "lb-5f7k",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-vx3n",
+      "to_id": "lb-qrb1",
       "dep_type": "parent"
     }
   ]
