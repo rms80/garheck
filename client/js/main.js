@@ -213,7 +213,7 @@ function gameLoop() {
     if (localState) {
       characters[myPlayerId].setPosition(localState.x, localState.y, localState.z);
       characters[myPlayerId].setRotation(localState.yaw);
-      characters[myPlayerId].updateAnimation(localState.state || 'idle', localState.stateTimer || 0, 1 / 60);
+      characters[myPlayerId].updateAnimation(localState.state || 'idle', localState.stateTimer || 0, 1 / 60, localState.airParrying || false);
       characters[myPlayerId].setIframeBlink(localState.iframesRemaining || 0);
       camera.update(localState.x, localState.y, localState.z);
     }
@@ -223,7 +223,7 @@ function gameLoop() {
     if (oppState) {
       characters[opponentId].setPosition(oppState.x, oppState.y, oppState.z);
       characters[opponentId].setRotation(oppState.yaw);
-      characters[opponentId].updateAnimation(oppState.state || 'idle', oppState.stateTimer || 0, 1 / 60);
+      characters[opponentId].updateAnimation(oppState.state || 'idle', oppState.stateTimer || 0, 1 / 60, oppState.airParrying || false);
       characters[opponentId].setIframeBlink(oppState.iframesRemaining || 0);
     }
   }

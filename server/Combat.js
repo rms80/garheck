@@ -90,26 +90,28 @@ function applyHit(attacker, target, baseDamage, baseKnockbackXZ, knockbackY, bas
   const nx = dist > 0 ? dx / dist : 0;
   const nz = dist > 0 ? dz / dist : 1;
 
-  // Check parry
-  if (target.isParrying()) {
-    // Parry: negate damage, stun attacker
-    attacker.enterHitstun(PARRY_PUNISH_STUN);
-    return {
-      kind: 'parry',
-      attackerId: attacker.id,
-      targetId: target.id,
-    };
-  }
-
-  // Check block
   let damage = baseDamage;
   let knockbackMult = 1;
   let hitstun = baseHitstun;
 
-  if (target.isBlocking()) {
-    damage *= BLOCK_DAMAGE_MULTIPLIER;
-    knockbackMult = BLOCK_KNOCKBACK_MULTIPLIER;
-    hitstun = BLOCK_STUN;
+  // Block and parry only apply to punches, not stomps
+  if (attackType !== 'stomp') {
+    // Check parry
+    if (target.isParrying()) {
+      attacker.enterHitstun(PARRY_PUNISH_STUN);
+      return {
+        kind: 'parry',
+        attackerId: attacker.id,
+        targetId: target.id,
+      };
+    }
+
+    // Check block
+    if (target.isBlocking()) {
+      damage *= BLOCK_DAMAGE_MULTIPLIER;
+      knockbackMult = BLOCK_KNOCKBACK_MULTIPLIER;
+      hitstun = BLOCK_STUN;
+    }
   }
 
   // Apply damage

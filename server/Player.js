@@ -41,6 +41,10 @@ export class Player {
 
     // Stomp tracking
     this.stompHasHit = false;
+    this._stompTapTimer = 0; // double-tap window for airborne stomp
+
+    // Air parry tracking
+    this._airParryElapsed = -1; // -1 = inactive
 
     // Punch tracking (used by Combat.js)
     this._punchHitThisCycle = false;
@@ -109,6 +113,16 @@ export class Player {
       this.stateTimer -= dt;
     }
 
+    // Decay stomp double-tap timer
+    if (this._stompTapTimer > 0) {
+      this._stompTapTimer = Math.max(0, this._stompTapTimer - dt);
+    }
+
+    // Tick air parry timer
+    if (this._airParryElapsed >= 0) {
+      this._airParryElapsed += dt;
+    }
+
     // Attack phase progression
     if (this.state === 'attacking') {
       this.attackPhaseTimer -= dt;
@@ -120,7 +134,15 @@ export class Player {
           this.attackPhase = 'recovery';
           this.attackPhaseTimer = PUNCH_RECOVERY;
         } else if (this.attackPhase === 'recovery') {
-          this._transitionToIdle();
+          if (!this.grounded) {
+            // Air punch finished — return to falling
+            this.state = 'falling';
+            this.stateTimer = 0;
+            this.attackPhase = null;
+            this.attackPhaseTimer = 0;
+          } else {
+            this._transitionToIdle();
+          }
         }
       }
     }
@@ -152,7 +174,16 @@ export class Player {
 
     // Landing while jumping or falling
     if ((this.state === 'jumping' || this.state === 'falling') && this.grounded) {
-      this._transitionToIdle();
+      this._stompTapTimer = 0;
+      if (this.currentInput.block) {
+        // Landing while holding block — enter block without parry window
+        this.state = 'blocking';
+        this.blockElapsed = PARRY_WINDOW;
+        this._airParryElapsed = -1;
+      } else {
+        this._airParryElapsed = -1;
+        this._transitionToIdle();
+      }
     }
 
     // Stomping - landing
@@ -177,8 +208,8 @@ export class Player {
     const canAct = this.state === 'idle' || this.state === 'running';
     const isAirborne = this.state === 'jumping' || this.state === 'falling';
 
-    // Block (held)
-    if (input.block && canAct) {
+    // Block (held) - ground only
+    if (input.block && canAct && this.grounded) {
       this.state = 'blocking';
       this.blockElapsed = 0;
       return;
@@ -189,11 +220,22 @@ export class Player {
       this._transitionToIdle();
     }
 
+    // Release block resets air parry
+    if (!input.block) {
+      this._airParryElapsed = -1;
+    }
+
+    // Air parry — block pressed while airborne starts parry window (doesn't change state)
+    if (input.block && !this.grounded && this._airParryElapsed < 0 && this.state !== 'stomping') {
+      this._airParryElapsed = 0;
+    }
+
     // Jump
     if (input.jump && canAct && this.grounded) {
       this.state = 'jumping';
       this.velocityY = PLAYER_JUMP_VELOCITY;
       this.grounded = false;
+      input.jump = false; // consume so it doesn't also trigger stomp this tick
     }
 
     // Re-evaluate airborne after possible jump transition
@@ -201,20 +243,28 @@ export class Player {
     const isNowAirborne = this.state === 'jumping' || this.state === 'falling'
       || ((this.state === 'running' || this.state === 'idle') && !this.grounded);
 
-    // Attack - air stomp (check before ground punch so airborne attacks become stomps)
-    if (input.attack && isNowAirborne && this.state !== 'stomping') {
-      this.state = 'stomping';
-      this.velocityY = STOMP_VELOCITY;
-      this.stompHasHit = false;
-      return;
+    // Air stomp - double-tap spacebar while airborne
+    if (input.jump && isNowAirborne && this.state !== 'stomping') {
+      if (this._stompTapTimer > 0) {
+        // Second tap within window — stomp
+        this.state = 'stomping';
+        this.velocityY = STOMP_VELOCITY;
+        this.stompHasHit = false;
+        this._stompTapTimer = 0;
+        return;
+      } else {
+        // First tap — start the double-tap window
+        this._stompTapTimer = 0.3;
+      }
     }
 
-    // Attack - ground punch
-    if (input.attack && canAct && this.grounded) {
+    // Attack - punch (ground or air)
+    if (input.attack && (canAct || isNowAirborne) && this.state !== 'attacking' && this.state !== 'stomping') {
       this.state = 'attacking';
       this.attackPhase = 'windup';
       this.attackPhaseTimer = PUNCH_WINDUP;
       this.stateTimer = PUNCH_WINDUP + PUNCH_ACTIVE + PUNCH_RECOVERY;
+      this._wasAirborneWhenAttacking = !this.grounded;
       return;
     }
 
@@ -268,7 +318,9 @@ export class Player {
   }
 
   isParrying() {
-    return this.state === 'blocking' && this.blockElapsed < PARRY_WINDOW;
+    if (this.state === 'blocking' && this.blockElapsed < PARRY_WINDOW) return true;
+    if (this._airParryElapsed >= 0 && this._airParryElapsed < PARRY_WINDOW) return true;
+    return false;
   }
 
   isBlocking() {
@@ -290,6 +342,7 @@ export class Player {
       state: this.state,
       stateTimer: this.stateTimer,
       iframesRemaining: this.iframesRemaining,
+      airParrying: this._airParryElapsed >= 0 && this._airParryElapsed < PARRY_WINDOW,
     };
   }
 }

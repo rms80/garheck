@@ -186,7 +186,7 @@ export class Character {
     scene.add(this.group);
   }
 
-  updateAnimation(state, stateTimer, dt) {
+  updateAnimation(state, stateTimer, dt, airParrying = false) {
     this._resetPose();
 
     const time = performance.now() / 1000;
@@ -222,6 +222,11 @@ export class Character {
       case 'ko':
         this._animateKO();
         break;
+    }
+
+    // Overlay block arm pose during air parry
+    if (airParrying) {
+      this._animateBlocking();
     }
   }
 

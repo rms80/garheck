@@ -53,21 +53,16 @@ export function simulatePlayer(player, input, dt) {
   let intentionalVelZ = 0;
 
   const canMove = player.state === 'idle' || player.state === 'running' ||
-                  player.state === 'jumping' || player.state === 'falling';
-  const reducedMove = player.state === 'attacking' && player.attackPhase === 'recovery';
+                  player.state === 'jumping' || player.state === 'falling' ||
+                  player.state === 'attacking';
 
-  if (canMove || reducedMove) {
+  if (canMove) {
     const dir = resolveMovementDirection(input);
     let speed = PLAYER_MOVE_SPEED;
 
     // Air control
     if (!player.grounded) {
       speed *= AIR_CONTROL_FACTOR;
-    }
-
-    // Reduced speed during attack recovery
-    if (reducedMove) {
-      speed *= 0.3;
     }
 
     intentionalVelX = dir.dx * speed;

@@ -39,7 +39,7 @@ export const STOMP_MISS_LAG = 0.4;
 export const BLOCK_DAMAGE_MULTIPLIER = 0.5;  // 50% damage when blocking
 export const BLOCK_KNOCKBACK_MULTIPLIER = 0.25; // 25% knockback when blocking
 export const BLOCK_STUN = 0.15;              // block stun duration
-export const PARRY_WINDOW = 0.15;            // seconds after block starts where parry is active
+export const PARRY_WINDOW = 0.3;             // seconds after block starts where parry is active
 export const PARRY_PUNISH_STUN = 0.4;        // hitstun applied to attacker on parry
 
 export const IFRAMES_DURATION = 0.8;
