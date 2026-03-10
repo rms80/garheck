@@ -227,6 +227,11 @@
       "dep_type": "parent"
     },
     {
+      "from_id": "lb-dgow",
+      "to_id": "lb-0m3n",
+      "dep_type": "parent"
+    },
+    {
       "from_id": "lb-fuwi",
       "to_id": "lb-5f7k",
       "dep_type": "parent"
@@ -239,6 +244,11 @@
     {
       "from_id": "lb-kc3w",
       "to_id": "lb-0dhz",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-lwui",
+      "to_id": "lb-0m3n",
       "dep_type": "parent"
     },
     {
@@ -264,16 +274,6 @@
     {
       "from_id": "lb-ya3y",
       "to_id": "lb-0dhz",
-      "dep_type": "parent"
-    },
-    {
-      "from_id": "lb-dgow",
-      "to_id": "lb-0m3n",
-      "dep_type": "parent"
-    },
-    {
-      "from_id": "lb-lwui",
-      "to_id": "lb-0m3n",
       "dep_type": "parent"
     }
   ]
