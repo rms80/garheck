@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import { SERVER_PORT } from '../shared/constants.js';
+import { Game } from './Game.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,13 +68,13 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server });
 
 // Game session state
-let players = [null, null]; // ws connections
+let wsConnections = [null, null]; // ws connections
 let playerIds = new Map();  // ws -> playerId
-let gameActive = false;
+let game = null;
 
 function broadcast(msg) {
   const data = JSON.stringify(msg);
-  for (const ws of players) {
+  for (const ws of wsConnections) {
     if (ws && ws.readyState === 1) {
       ws.send(data);
     }
@@ -81,14 +82,19 @@ function broadcast(msg) {
 }
 
 function sendTo(playerId, msg) {
-  const ws = players[playerId];
+  const ws = wsConnections[playerId];
   if (ws && ws.readyState === 1) {
     ws.send(JSON.stringify(msg));
   }
 }
 
-function startCountdown() {
-  gameActive = true;
+function startGame() {
+  game = new Game(SOLO_MODE);
+  for (let i = 0; i < 2; i++) {
+    game.setConnection(i, wsConnections[i]);
+  }
+
+  // Countdown sequence
   let count = 3;
   const interval = setInterval(() => {
     if (count > 0) {
@@ -97,13 +103,17 @@ function startCountdown() {
     } else {
       clearInterval(interval);
       broadcast({ type: 'event', event: { kind: 'roundStart' } });
+      game.start();
     }
   }, 1000);
 }
 
 function cleanupSession() {
-  gameActive = false;
-  players = [null, null];
+  if (game) {
+    game.stop();
+    game = null;
+  }
+  wsConnections = [null, null];
   playerIds.clear();
 }
 
@@ -112,9 +122,9 @@ function handleDisconnect(ws) {
   if (playerId === undefined) return;
 
   playerIds.delete(ws);
-  players[playerId] = null;
+  wsConnections[playerId] = null;
 
-  if (gameActive) {
+  if (game) {
     const otherId = 1 - playerId;
     broadcast({ type: 'event', event: { kind: 'disconnect', playerId } });
     broadcast({ type: 'event', event: { kind: 'matchEnd', winnerId: otherId, scores: [0, 0] } });
@@ -123,16 +133,16 @@ function handleDisconnect(ws) {
 }
 
 wss.on('connection', (ws) => {
-  // Check if game is full
-  if (players[0] && players[1]) {
+  // Check if game is full (both connections exist or game running)
+  if (wsConnections[0] && wsConnections[1]) {
     ws.send(JSON.stringify({ type: 'lobby', status: 'full' }));
     ws.close();
     return;
   }
 
   // Assign player ID
-  const playerId = players[0] === null ? 0 : 1;
-  players[playerId] = ws;
+  const playerId = wsConnections[0] === null ? 0 : 1;
+  wsConnections[playerId] = ws;
   playerIds.set(ws, playerId);
 
   console.log(`Player ${playerId} connected${SOLO_MODE ? ' (solo mode)' : ''}`);
@@ -146,8 +156,8 @@ wss.on('connection', (ws) => {
   ws.on('message', (data) => {
     try {
       const msg = JSON.parse(data);
-      if (msg.type === 'input') {
-        // Input processing will be added in Phase 3
+      if (msg.type === 'input' && game) {
+        game.queueInput(playerId, msg.keys, msg.seq);
       }
     } catch (e) {
       // Silently ignore malformed messages
@@ -159,16 +169,14 @@ wss.on('connection', (ws) => {
 
   // Check if we should start the game
   if (SOLO_MODE && playerId === 0) {
-    // In solo mode, start immediately with a dummy player
     console.log('Solo mode: starting game session with dummy opponent');
-    ws.send(JSON.stringify({ type: 'lobby', status: 'countdown', playerId: 0 }));
-    startCountdown();
-  } else if (players[0] && players[1]) {
-    // Both players connected
+    sendTo(0, { type: 'lobby', status: 'countdown', playerId: 0 });
+    startGame();
+  } else if (wsConnections[0] && wsConnections[1]) {
     console.log('Two players connected: starting game session');
     sendTo(0, { type: 'lobby', status: 'countdown', playerId: 0 });
     sendTo(1, { type: 'lobby', status: 'countdown', playerId: 1 });
-    startCountdown();
+    startGame();
   }
 });
 

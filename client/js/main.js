@@ -3,6 +3,8 @@ import { Network } from './Network.js';
 import { Renderer } from './Renderer.js';
 import { Character } from './Character.js';
 import { Camera } from './Camera.js';
+import { Input } from './Input.js';
+import { Prediction } from './Prediction.js';
 
 // Init renderer
 const canvas = document.getElementById('gameCanvas');
@@ -11,26 +13,26 @@ const renderer = new Renderer(canvas);
 // Create characters at spawn positions
 const characters = [new Character(0), new Character(1)];
 characters[0].setPosition(-8, 0, 0);
-characters[0].setRotation(Math.PI / 2); // Face center
+characters[0].setRotation(Math.PI / 2);
 characters[1].setPosition(8, 0, 0);
-characters[1].setRotation(-Math.PI / 2); // Face center
+characters[1].setRotation(-Math.PI / 2);
 characters[0].addToScene(renderer.scene);
 characters[1].addToScene(renderer.scene);
 
-// Camera
+// Camera, input, network, prediction
 const camera = new Camera(canvas);
-
-// Network
+const input = new Input();
 const network = new Network();
+const prediction = new Prediction();
 
 // Game state
 let gameActive = false;
 let myPlayerId = null;
 
-// Player positions (updated from server or prediction)
+// Player states (fallback before server data arrives)
 const playerStates = [
-  { x: -8, y: 0, z: 0, yaw: Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0 },
-  { x: 8, y: 0, z: 0, yaw: -Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0 },
+  { x: -8, y: 0, z: 0, yaw: Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0, hp: 100 },
+  { x: 8, y: 0, z: 0, yaw: -Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0, hp: 100 },
 ];
 
 // UI Elements
@@ -58,11 +60,7 @@ network.on('lobby', (msg) => {
   network.playerId = msg.playerId;
 
   // Set initial camera yaw based on player ID
-  if (myPlayerId === 0) {
-    camera.yaw = Math.PI / 2;
-  } else {
-    camera.yaw = -Math.PI / 2;
-  }
+  camera.yaw = myPlayerId === 0 ? Math.PI / 2 : -Math.PI / 2;
 
   if (msg.status === 'waiting') {
     hideAllScreens();
@@ -93,7 +91,6 @@ network.on('event', (msg) => {
     hud.style.display = 'block';
     setTimeout(() => {
       countdownScreen.style.display = 'none';
-      // Request pointer lock when game starts
       canvas.requestPointerLock();
     }, 1000);
   }
@@ -101,16 +98,18 @@ network.on('event', (msg) => {
 
 // Handle state updates from server
 network.on('state', (msg) => {
+  if (myPlayerId === null) return;
+
   for (const p of msg.players) {
-    playerStates[p.id] = {
-      x: p.x,
-      y: p.y,
-      z: p.z,
-      yaw: p.yaw,
-      state: p.state,
-      stateTimer: p.stateTimer,
-      iframesRemaining: p.iframesRemaining,
-    };
+    if (p.id === myPlayerId) {
+      // Reconcile own player
+      prediction.reconcile(p, msg.lastProcessedSeq);
+    } else {
+      // Opponent interpolation
+      prediction.addOpponentSnapshot(p);
+    }
+    // Always update playerStates for HUD etc.
+    playerStates[p.id] = p;
   }
 });
 
@@ -121,22 +120,72 @@ canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 function gameLoop() {
   requestAnimationFrame(gameLoop);
 
-  // Update character positions from state
-  for (let i = 0; i < 2; i++) {
-    const ps = playerStates[i];
-    characters[i].setPosition(ps.x, ps.y, ps.z);
-    characters[i].setRotation(ps.yaw);
-    characters[i].updateAnimation(ps.state, ps.stateTimer, 1 / 60);
-    characters[i].setIframeBlink(ps.iframesRemaining);
+  if (gameActive && myPlayerId !== null) {
+    // Capture input and send to server
+    const inputState = input.getState(camera.getYaw());
+    const seq = prediction.processInput(inputState);
+    network.sendInput(seq, inputState);
   }
 
-  // Update camera to follow local player
+  // Get display states
   if (myPlayerId !== null) {
-    const ps = playerStates[myPlayerId];
-    camera.update(ps.x, ps.y, ps.z);
+    // Own player: use prediction
+    const localState = prediction.localState;
+    if (localState) {
+      characters[myPlayerId].setPosition(localState.x, localState.y, localState.z);
+      characters[myPlayerId].setRotation(localState.yaw);
+      characters[myPlayerId].updateAnimation(
+        localState.state || 'idle',
+        localState.stateTimer || 0,
+        1 / 60
+      );
+      characters[myPlayerId].setIframeBlink(localState.iframesRemaining || 0);
+
+      // Camera follows our player
+      camera.update(localState.x, localState.y, localState.z);
+    }
+
+    // Opponent: use interpolation
+    const opponentId = 1 - myPlayerId;
+    const oppState = prediction.getOpponentState();
+    if (oppState) {
+      characters[opponentId].setPosition(oppState.x, oppState.y, oppState.z);
+      characters[opponentId].setRotation(oppState.yaw);
+      characters[opponentId].updateAnimation(
+        oppState.state || 'idle',
+        oppState.stateTimer || 0,
+        1 / 60
+      );
+      characters[opponentId].setIframeBlink(oppState.iframesRemaining || 0);
+    } else {
+      // Fallback: use raw server state
+      const ps = playerStates[opponentId];
+      characters[opponentId].setPosition(ps.x, ps.y, ps.z);
+      characters[opponentId].setRotation(ps.yaw);
+      characters[opponentId].updateAnimation(ps.state, ps.stateTimer || 0, 1 / 60);
+    }
   }
+
+  // Update HUD
+  updateHUD();
 
   renderer.render(camera.camera);
+}
+
+function updateHUD() {
+  const hp1 = document.getElementById('hp1');
+  const hp2 = document.getElementById('hp2');
+  const hp1Text = document.getElementById('hp1Text');
+  const hp2Text = document.getElementById('hp2Text');
+
+  if (hp1 && playerStates[0]) {
+    hp1.style.width = `${playerStates[0].hp}%`;
+    hp1Text.textContent = `${Math.ceil(playerStates[0].hp)}`;
+  }
+  if (hp2 && playerStates[1]) {
+    hp2.style.width = `${playerStates[1].hp}%`;
+    hp2Text.textContent = `${Math.ceil(playerStates[1].hp)}`;
+  }
 }
 
 // Start
