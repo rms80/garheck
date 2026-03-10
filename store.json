@@ -105,6 +105,15 @@
       "created_at": "2026-03-10T16:41:08.426667351Z",
       "updated_at": "2026-03-10T16:43:02.186846939Z"
     },
+    "lb-gwby": {
+      "id": "lb-gwby",
+      "title": "Camera wall collision raycast",
+      "item_type": "task",
+      "status": "open",
+      "priority": 2,
+      "created_at": "2026-03-10T16:50:19.982963684Z",
+      "updated_at": "2026-03-10T16:50:19.982963684Z"
+    },
     "lb-hvyr": {
       "id": "lb-hvyr",
       "title": "server/Game.js - tick loop + state broadcast",
@@ -302,6 +311,11 @@
     {
       "from_id": "lb-ya3y",
       "to_id": "lb-0dhz",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-gwby",
+      "to_id": "lb-qfu6",
       "dep_type": "parent"
     }
   ]
