@@ -63,11 +63,10 @@
       "id": "lb-7g6x",
       "title": "Hit particles effect",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 3,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:50:19.995104180Z",
-      "updated_at": "2026-03-10T16:57:59.315590100Z"
+      "updated_at": "2026-03-10T16:59:07.989714709Z"
     },
     "lb-85uo": {
       "id": "lb-85uo",
