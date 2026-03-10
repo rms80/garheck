@@ -6,6 +6,7 @@ import { Camera } from './Camera.js';
 import { Input } from './Input.js';
 import { Prediction } from './Prediction.js';
 import { HUD } from './HUD.js';
+import { Particles } from './Particles.js';
 
 // Init renderer
 const canvas = document.getElementById('gameCanvas');
@@ -26,6 +27,7 @@ const input = new Input();
 const network = new Network();
 const prediction = new Prediction();
 const hudManager = new HUD();
+const particles = new Particles(renderer.scene);
 
 // Game state
 let gameActive = false;
@@ -136,13 +138,24 @@ network.on('event', (msg) => {
       matchEndScreen.style.display = 'flex';
       break;
 
-    case 'hit':
+    case 'hit': {
       console.log(`Player ${event.attackerId} hit Player ${event.targetId} for ${event.damage} damage (${event.attackType})`);
+      const target = playerStates[event.targetId];
+      if (target) {
+        const hitColor = event.targetId === 0 ? 0xe74c3c : 0x3498db;
+        particles.spawnHit(target.x, target.y + 1.0, target.z, hitColor);
+      }
       break;
+    }
 
-    case 'parry':
+    case 'parry': {
       console.log(`Player ${event.targetId} parried Player ${event.attackerId}!`);
+      const parrier = playerStates[event.targetId];
+      if (parrier) {
+        particles.spawnHit(parrier.x, parrier.y + 1.0, parrier.z, 0xffffff);
+      }
       break;
+    }
 
     case 'playAgainWaiting':
       playAgainBtn.textContent = 'Waiting for opponent...';
@@ -214,6 +227,9 @@ function gameLoop() {
       characters[opponentId].setIframeBlink(oppState.iframesRemaining || 0);
     }
   }
+
+  // Update particles
+  particles.update(1 / 60);
 
   // Update HUD
   hudManager.updateHP(playerStates[0].hp, playerStates[1].hp);
