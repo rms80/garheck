@@ -73,11 +73,10 @@
       "id": "lb-94ad",
       "title": "HUD.js - HP bars, timer, round display, overlays",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:47:43.479952823Z",
-      "updated_at": "2026-03-10T16:47:45.007856372Z"
+      "updated_at": "2026-03-10T16:49:41.321447101Z"
     },
     "lb-cm8g": {
       "id": "lb-cm8g",
