@@ -127,11 +127,10 @@
       "id": "lb-gwby",
       "title": "Camera wall collision raycast",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 2,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:50:19.982963684Z",
-      "updated_at": "2026-03-10T16:51:24.253607229Z"
+      "updated_at": "2026-03-10T16:52:11.266707544Z"
     },
     "lb-hvyr": {
       "id": "lb-hvyr",
