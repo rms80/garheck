@@ -103,17 +103,17 @@
   },
   "deps": [
     {
-      "from_id": "lb-8uig",
-      "to_id": "lb-qrb1",
-      "dep_type": "parent"
-    },
-    {
       "from_id": "lb-15az",
       "to_id": "lb-qrb1",
       "dep_type": "parent"
     },
     {
       "from_id": "lb-85uo",
+      "to_id": "lb-qrb1",
+      "dep_type": "parent"
+    },
+    {
+      "from_id": "lb-8uig",
       "to_id": "lb-qrb1",
       "dep_type": "parent"
     },
