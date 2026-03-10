@@ -85,11 +85,10 @@
       "title": "Create client HTML, CSS, main.js, Network.js",
       "description": "index.html with import map, style.css, main.js entry point, Network.js WebSocket wrapper",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:38:44.753998376Z",
-      "updated_at": "2026-03-10T16:39:39.877994853Z"
+      "updated_at": "2026-03-10T16:41:01.149893566Z"
     },
     "lb-x2aj": {
       "id": "lb-x2aj",
