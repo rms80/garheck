@@ -45,11 +45,10 @@
       "title": "Create server/index.js with HTTP + WebSocket",
       "description": "Static file server with MIME types, WebSocket, lobby, solo mode",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:38:44.742806359Z",
-      "updated_at": "2026-03-10T16:39:39.830039794Z"
+      "updated_at": "2026-03-10T16:41:01.137942918Z"
     },
     "lb-8uig": {
       "id": "lb-8uig",
