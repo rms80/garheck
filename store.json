@@ -55,11 +55,10 @@
       "title": "Create package.json and shared/constants.js",
       "description": "Set up package.json with ws dep, create shared/constants.js with all game constants",
       "item_type": "task",
-      "status": "open",
+      "status": "closed",
       "priority": 1,
-      "claimed_by": "agent-runner",
       "created_at": "2026-03-10T16:38:44.719057633Z",
-      "updated_at": "2026-03-10T16:38:46.547160335Z"
+      "updated_at": "2026-03-10T16:39:35.271912388Z"
     },
     "lb-qfu6": {
       "id": "lb-qfu6",
