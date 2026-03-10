@@ -196,20 +196,20 @@ export class Player {
       this.grounded = false;
     }
 
-    // Attack - ground punch
-    if (input.attack && canAct) {
-      this.state = 'attacking';
-      this.attackPhase = 'windup';
-      this.attackPhaseTimer = PUNCH_WINDUP;
-      this.stateTimer = PUNCH_WINDUP + PUNCH_ACTIVE + PUNCH_RECOVERY;
-      return;
-    }
-
-    // Attack - air stomp
+    // Attack - air stomp (check before ground punch so airborne attacks become stomps)
     if (input.attack && isAirborne && this.state !== 'stomping') {
       this.state = 'stomping';
       this.velocityY = STOMP_VELOCITY;
       this.stompHasHit = false;
+      return;
+    }
+
+    // Attack - ground punch
+    if (input.attack && canAct && this.grounded) {
+      this.state = 'attacking';
+      this.attackPhase = 'windup';
+      this.attackPhaseTimer = PUNCH_WINDUP;
+      this.stateTimer = PUNCH_WINDUP + PUNCH_ACTIVE + PUNCH_RECOVERY;
       return;
     }
 
