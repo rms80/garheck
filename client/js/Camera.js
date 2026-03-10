@@ -103,31 +103,26 @@ export class Camera {
     const lookY = playerY + charHeight * 0.75;
     const lookZ = playerZ;
 
-    // Wall collision: raycast from look-at to ideal camera position
-    const dirX = camX - lookX;
-    const dirY = camY - lookY;
-    const dirZ = camZ - lookZ;
-    const dirLen = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+    // Wall collision: 2D ray-segment intersection from look-at to ideal camera (XZ plane)
+    const WALL_MARGIN = 0.3;
+    let closestT = 1.0; // parametric t along ray, 1.0 = full distance (no hit)
+    const rdx = camX - lookX;
+    const rdz = camZ - lookZ;
 
-    if (dirLen > 0.01) {
-      // Simple wall collision using arena wall segments
-      // Check if camera is outside arena bounds on XZ plane
-      let clampedDist = this.distance;
-      for (const seg of this._wallSegments) {
-        // Check if camera ray intersects wall plane
-        const wallDist = this._pointToSegmentDist(camX, camZ, seg.ax, seg.az, seg.bx, seg.bz);
-        if (wallDist < 0.5) {
-          // Camera too close to wall, pull it in
-          const pullFactor = Math.max(0.3, wallDist / 0.5);
-          clampedDist = Math.min(clampedDist, this.distance * pullFactor);
-        }
+    for (const seg of this._wallSegments) {
+      const t = this._raySegmentIntersect(lookX, lookZ, rdx, rdz,
+        seg.ax, seg.az, seg.bx, seg.bz);
+      if (t !== null && t < closestT) {
+        closestT = t;
       }
+    }
 
-      if (clampedDist < this.distance) {
-        camX = playerX - clampedDist * Math.sin(this.yaw) * Math.cos(this.pitch);
-        camY = playerY + charHeight + clampedDist * Math.sin(this.pitch);
-        camZ = playerZ - clampedDist * Math.cos(this.yaw) * Math.cos(this.pitch);
-      }
+    if (closestT < 1.0) {
+      // Pull camera to just before the wall hit
+      const clampedDist = Math.max(CAMERA_MIN_DISTANCE, this.distance * closestT - WALL_MARGIN);
+      camX = playerX - clampedDist * Math.sin(this.yaw) * Math.cos(this.pitch);
+      camY = playerY + charHeight + clampedDist * Math.sin(this.pitch);
+      camZ = playerZ - clampedDist * Math.cos(this.yaw) * Math.cos(this.pitch);
     }
 
     // Clamp camera Y above ground
@@ -137,20 +132,17 @@ export class Camera {
     this.camera.lookAt(lookX, lookY, lookZ);
   }
 
-  _pointToSegmentDist(px, pz, ax, az, bx, bz) {
-    const abx = bx - ax;
-    const abz = bz - az;
-    const apx = px - ax;
-    const apz = pz - az;
-    const dot = apx * abx + apz * abz;
-    const lenSq = abx * abx + abz * abz;
-    let t = lenSq > 0 ? dot / lenSq : 0;
-    t = Math.max(0, Math.min(1, t));
-    const closestX = ax + t * abx;
-    const closestZ = az + t * abz;
-    const dx = px - closestX;
-    const dz = pz - closestZ;
-    return Math.sqrt(dx * dx + dz * dz);
+  // 2D ray-segment intersection. Returns parametric t along ray [0,1] or null.
+  // Ray: origin (ox,oz) + t*(dx,dz), Segment: (ax,az)-(bx,bz)
+  _raySegmentIntersect(ox, oz, dx, dz, ax, az, bx, bz) {
+    const sx = bx - ax;
+    const sz = bz - az;
+    const denom = dx * sz - dz * sx;
+    if (Math.abs(denom) < 1e-8) return null; // parallel
+    const t = ((ax - ox) * sz - (az - oz) * sx) / denom;
+    const u = ((ax - ox) * dz - (az - oz) * dx) / denom;
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return t;
+    return null;
   }
 
   getYaw() {
