@@ -23,8 +23,7 @@ export class Camera {
     this.distance = CAMERA_DEFAULT_DISTANCE;
     this.pointerLocked = false;
 
-    // For wall collision raycasting
-    this._raycaster = new THREE.Raycaster();
+    // Wall segments for camera collision
     this._wallSegments = computeWallSegments();
 
     this._setupPointerLock();
