@@ -33,6 +33,12 @@ export class Input {
           }
           e.preventDefault();
           break;
+        case 'KeyF':
+          if (!this._attackDown) {
+            this.attackPressed = true;
+            this._attackDown = true;
+          }
+          break;
       }
     });
 
@@ -43,6 +49,7 @@ export class Input {
         case 'KeyA': this.keys.left = false; break;
         case 'KeyD': this.keys.right = false; break;
         case 'Space': this._jumpDown = false; break;
+        case 'KeyF': this._attackDown = false; break;
       }
     });
 

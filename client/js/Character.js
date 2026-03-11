@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { SimplifyModifier } from 'three/addons/modifiers/SimplifyModifier.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
+
 const simplifier = new SimplifyModifier();
 
 const P1_COLOR = 0xe74c3c;
@@ -132,9 +133,12 @@ export class Character {
       // Strip normals before merge so only positions are compared
       const forMerge = this[name].geometry.clone();
       forMerge.deleteAttribute('normal');
+      if (forMerge.hasAttribute('uv')) forMerge.deleteAttribute('uv');
+      if (forMerge.hasAttribute('uv2')) forMerge.deleteAttribute('uv2');
       const indexed = mergeVertices(forMerge);
       indexed.computeVertexNormals();
       forMerge.dispose();
+
       this._originalIndexed[name] = indexed;
     }
 
