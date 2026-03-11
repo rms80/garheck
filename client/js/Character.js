@@ -1,10 +1,7 @@
 // client/js/Character.js
 import * as THREE from 'three';
-import { SimplifyModifier } from 'three/addons/modifiers/SimplifyModifier.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-
-
-const simplifier = new SimplifyModifier();
+import { simplifyGeometry } from './util/simplify.js';
 
 const P1_COLOR = 0xe74c3c;
 const P2_COLOR = 0x3498db;
@@ -209,7 +206,7 @@ export class Character {
     scene.add(this.group);
   }
 
-  updateAnimation(state, stateTimer, dt, airParrying = false) {
+  updateAnimation(state, stateTimer, dt, airParrying = false, dashDirection = null, isStrafing = false) {
     this._resetPose();
 
     const time = performance.now() / 1000;
@@ -219,7 +216,7 @@ export class Character {
         this._animateIdle(time);
         break;
       case 'running':
-        this._animateRunning(time);
+        this._animateRunning(time, isStrafing);
         break;
       case 'jumping':
         this._animateJumping();
@@ -245,6 +242,11 @@ export class Character {
       case 'ko':
         this._animateKO();
         break;
+    }
+
+    // Override pose for dash directions (only during jump/fall, not while attacking etc.)
+    if (dashDirection && (state === 'jumping' || state === 'falling')) {
+      this._animateDash(dashDirection);
     }
 
     // Overlay block arm pose during air parry
@@ -275,14 +277,22 @@ export class Character {
     this.rightArm.rotation.z = -sway;
   }
 
-  _animateRunning(time) {
+  _animateRunning(time, isStrafing = false) {
     const speed = 8;
     const swing = Math.sin(time * speed) * (Math.PI / 6);
-    this.leftLeg.rotation.x = swing;
-    this.rightLeg.rotation.x = -swing;
-    this.leftArm.rotation.x = -swing;
-    this.rightArm.rotation.x = swing;
-    this.body.rotation.x = -Math.PI / 36;
+    if (isStrafing) {
+      // Legs swing side-to-side
+      this.leftLeg.rotation.z = swing;
+      this.rightLeg.rotation.z = -swing;
+      this.leftArm.rotation.z = -swing * 0.5;
+      this.rightArm.rotation.z = swing * 0.5;
+    } else {
+      this.leftLeg.rotation.x = swing;
+      this.rightLeg.rotation.x = -swing;
+      this.leftArm.rotation.x = -swing;
+      this.rightArm.rotation.x = swing;
+      this.body.rotation.x = -Math.PI / 36;
+    }
   }
 
   _animateJumping() {
@@ -297,6 +307,31 @@ export class Character {
     this.rightLeg.rotation.x = -Math.PI / 4;
     this.leftArm.rotation.x = -Math.PI / 8;
     this.rightArm.rotation.x = -Math.PI / 8;
+  }
+
+  _animateDash(direction) {
+    switch (direction) {
+      case 'left':
+        this.leftLeg.rotation.z = Math.PI / 4;
+        this.rightLeg.rotation.z = Math.PI / 4;
+        this.body.rotation.z = Math.PI / 8;
+        break;
+      case 'right':
+        this.leftLeg.rotation.z = -Math.PI / 4;
+        this.rightLeg.rotation.z = -Math.PI / 4;
+        this.body.rotation.z = -Math.PI / 8;
+        break;
+      case 'forward':
+        this.leftLeg.rotation.x = Math.PI / 4;
+        this.rightLeg.rotation.x = Math.PI / 4;
+        this.body.rotation.x = -Math.PI / 8;
+        break;
+      case 'backward':
+        this.leftLeg.rotation.x = -Math.PI / 3;
+        this.rightLeg.rotation.x = -Math.PI / 3;
+        this.body.rotation.x = Math.PI / 8;
+        break;
+    }
   }
 
   _animateAttacking(stateTimer) {
@@ -337,39 +372,25 @@ export class Character {
    */
   simplifyByHealth(hp, maxHp) {
     const healthPct = Math.max(0, Math.min(1, hp / maxHp));
-    // Linear but compressed: 50% HP → 50% removed, 5% HP → 100% removed
-    const removeFraction = Math.min(1, (1 - healthPct) / 0.95);
+    // Cube root curve: ramps faster at high HP
+    const removeFraction = Math.min(1, Math.pow((1 - healthPct) / 0.9, 1 / 3));
 
     for (const name of this._simplifyParts) {
       const mesh = this[name];
       const indexed = this._originalIndexed[name].clone();
-      const vertCount = indexed.attributes.position.count;
-      const removeCount = Math.floor(vertCount * removeFraction);
 
-      if (removeCount < 1) {
-        // Full health — restore original
+      const simplified = simplifyGeometry(indexed, removeFraction);
+      indexed.dispose();
+
+      if (!simplified) {
+        // Nothing to simplify (full health or too few verts) — restore original
         mesh.geometry.dispose();
         mesh.geometry = this._originalGeometries[name].clone();
-        indexed.dispose();
         continue;
       }
 
-      if (vertCount - removeCount < 4) {
-        indexed.dispose();
-        continue;
-      }
-
-      try {
-        const simplified = simplifier.modify(indexed, removeCount);
-        indexed.dispose();
-        if (simplified.attributes.position.count < 3) continue;
-        simplified.computeVertexNormals();
-        mesh.geometry.dispose();
-        mesh.geometry = simplified;
-      } catch (e) {
-        indexed.dispose();
-        console.warn(`Failed to simplify ${name}:`, e);
-      }
+      mesh.geometry.dispose();
+      mesh.geometry = simplified;
     }
   }
 

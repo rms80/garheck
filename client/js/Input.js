@@ -11,10 +11,21 @@ export class Input {
     this.jumpPressed = false;
     this.attackPressed = false;
     this.blockHeld = false;
+    this.dashDirection = null; // 'forward', 'backward', 'left', 'right'
 
     // Edge-trigger tracking
     this._jumpDown = false;
     this._attackDown = false;
+
+    // Double-tap tracking for dash
+    this._keyHeld = { KeyW: false, KeyA: false, KeyS: false, KeyD: false };
+    this._lastTapTime = { KeyW: 0, KeyA: 0, KeyS: 0, KeyD: 0 };
+    this._dashKeyMap = {
+      KeyW: 'forward',
+      KeyS: 'backward',
+      KeyA: 'left',
+      KeyD: 'right',
+    };
 
     this._setupListeners();
   }
@@ -40,6 +51,16 @@ export class Input {
           }
           break;
       }
+
+      // Double-tap dash detection
+      if (this._dashKeyMap[e.code] && !this._keyHeld[e.code]) {
+        const now = performance.now();
+        if (now - this._lastTapTime[e.code] < 200) {
+          this.dashDirection = this._dashKeyMap[e.code];
+        }
+        this._lastTapTime[e.code] = now;
+        this._keyHeld[e.code] = true;
+      }
     });
 
     document.addEventListener('keyup', (e) => {
@@ -50,6 +71,10 @@ export class Input {
         case 'KeyD': this.keys.right = false; break;
         case 'Space': this._jumpDown = false; break;
         case 'KeyF': this._attackDown = false; break;
+      }
+
+      if (this._keyHeld[e.code] !== undefined) {
+        this._keyHeld[e.code] = false;
       }
     });
 
@@ -87,12 +112,14 @@ export class Input {
       jump: this.jumpPressed,
       attack: this.attackPressed,
       block: this.blockHeld,
+      dash: this.dashDirection,
       cameraYaw: cameraYaw,
     };
 
     // Consume edge triggers
     this.jumpPressed = false;
     this.attackPressed = false;
+    this.dashDirection = null;
 
     return state;
   }

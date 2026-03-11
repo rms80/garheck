@@ -108,6 +108,7 @@ export class Prediction {
     this.localState.stateTimer = serverState.stateTimer;
     this.localState.iframesRemaining = serverState.iframesRemaining;
     this.localState.airParrying = serverState.airParrying;
+    this.localState.dashDirection = serverState.dashDirection;
   }
 
   /**

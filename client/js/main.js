@@ -7,6 +7,12 @@ import { Input } from './Input.js';
 import { Prediction } from './Prediction.js';
 import { HUD } from './HUD.js';
 import { Particles } from './Particles.js';
+import { initMeshopt, setBackend } from './util/simplify.js';
+
+// Initialize meshoptimizer (async, non-blocking — falls back to three.js until ready)
+initMeshopt().then(() => {
+  setBackend('meshopt');
+});
 
 // Init renderer
 const canvas = document.getElementById('gameCanvas');
@@ -41,6 +47,29 @@ const playerStates = [
   { x: -8, y: 0, z: 0, yaw: Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0, hp: 100 },
   { x: 8, y: 0, z: 0, yaw: -Math.PI / 2, state: 'idle', stateTimer: 0, iframesRemaining: 0, hp: 100 },
 ];
+const prevPositions = [{ x: -8, z: 0 }, { x: 8, z: 0 }];
+
+/**
+ * Detect strafing by comparing movement direction to facing yaw.
+ * Returns true if moving within 20 degrees of perpendicular to yaw.
+ */
+function detectStrafing(id, x, z, yaw) {
+  const dx = x - prevPositions[id].x;
+  const dz = z - prevPositions[id].z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  prevPositions[id].x = x;
+  prevPositions[id].z = z;
+  if (dist < 0.001) return false;
+  const moveAngle = Math.atan2(dx, dz);
+  let diff = moveAngle - yaw;
+  // Wrap to [-PI, PI]
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  const absDiff = Math.abs(diff);
+  // Strafing if within 20 degrees of 90 or 270
+  const tolerance = 20 * Math.PI / 180;
+  return (Math.abs(absDiff - Math.PI / 2) < tolerance) || (Math.abs(absDiff - 3 * Math.PI / 2) < tolerance);
+}
 
 // UI Elements
 const titleScreen = document.getElementById('titleScreen');
@@ -224,7 +253,8 @@ function gameLoop() {
       if ((localAnimState === 'idle' || localAnimState === 'running') && localState.y > 0.1) {
         localAnimState = localState.velocityY > 0 ? 'jumping' : 'falling';
       }
-      characters[myPlayerId].updateAnimation(localAnimState, localState.stateTimer || 0, 1 / 60, localState.airParrying || false);
+      const isStrafing = detectStrafing(myPlayerId, localState.x, localState.z, localState.yaw);
+      characters[myPlayerId].updateAnimation(localAnimState, localState.stateTimer || 0, 1 / 60, localState.airParrying || false, localState.dashDirection || null, isStrafing);
       characters[myPlayerId].setIframeBlink(localState.iframesRemaining || 0);
       camera.update(localState.x, localState.y, localState.z);
     }
@@ -238,7 +268,8 @@ function gameLoop() {
       if ((oppAnimState === 'idle' || oppAnimState === 'running') && oppState.y > 0.1) {
         oppAnimState = oppState.velocityY > 0 ? 'jumping' : 'falling';
       }
-      characters[opponentId].updateAnimation(oppAnimState, oppState.stateTimer || 0, 1 / 60, oppState.airParrying || false);
+      const oppStrafing = detectStrafing(opponentId, oppState.x, oppState.z, oppState.yaw);
+      characters[opponentId].updateAnimation(oppAnimState, oppState.stateTimer || 0, 1 / 60, oppState.airParrying || false, oppState.dashDirection || null, oppStrafing);
       characters[opponentId].setIframeBlink(oppState.iframesRemaining || 0);
     }
   }

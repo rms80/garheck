@@ -4,7 +4,8 @@ import {
   PLAYER_JUMP_VELOCITY,
   PUNCH_WINDUP, PUNCH_ACTIVE, PUNCH_RECOVERY,
   STOMP_VELOCITY, STOMP_MISS_LAG,
-  IFRAMES_DURATION, PARRY_WINDOW
+  IFRAMES_DURATION, PARRY_WINDOW,
+  DASH_IMPULSE_XZ, DASH_IMPULSE_Y, DASH_COOLDOWN
 } from '../shared/constants.js';
 
 export class Player {
@@ -49,10 +50,14 @@ export class Player {
     // Punch tracking (used by Combat.js)
     this._punchHitThisCycle = false;
 
+    // Dash tracking
+    this.dashCooldown = 0;
+    this.dashDirection = null; // 'forward', 'backward', 'left', 'right'
+
     // Current input
     this.currentInput = {
       left: false, right: false, forward: false, backward: false,
-      jump: false, attack: false, block: false, cameraYaw: this.yaw
+      jump: false, attack: false, block: false, dash: null, cameraYaw: this.yaw
     };
   }
 
@@ -73,11 +78,13 @@ export class Player {
 
     let jumpTriggered = false;
     let attackTriggered = false;
+    let dashTriggered = null;
 
     // Scan all queued inputs for edge triggers
     for (const entry of this.inputQueue) {
       if (entry.input.jump) jumpTriggered = true;
       if (entry.input.attack) attackTriggered = true;
+      if (entry.input.dash) dashTriggered = entry.input.dash;
       this.lastProcessedSeq = entry.seq;
     }
 
@@ -91,6 +98,7 @@ export class Player {
       jump: jumpTriggered,
       attack: attackTriggered,
       block: latest.block || false,
+      dash: dashTriggered,
       cameraYaw: typeof latest.cameraYaw === 'number' && isFinite(latest.cameraYaw)
         ? latest.cameraYaw : this.currentInput.cameraYaw
     };
@@ -106,6 +114,11 @@ export class Player {
     // Decay i-frames
     if (this.iframesRemaining > 0) {
       this.iframesRemaining = Math.max(0, this.iframesRemaining - dt);
+    }
+
+    // Decay dash cooldown
+    if (this.dashCooldown > 0) {
+      this.dashCooldown = Math.max(0, this.dashCooldown - dt);
     }
 
     // State-specific timer updates
@@ -175,6 +188,7 @@ export class Player {
     // Landing while jumping or falling
     if ((this.state === 'jumping' || this.state === 'falling') && this.grounded) {
       this._stompTapTimer = 0;
+      this.dashDirection = null;
       if (this.currentInput.block) {
         // Landing while holding block — enter block without parry window
         this.state = 'blocking';
@@ -268,6 +282,32 @@ export class Player {
       return;
     }
 
+    // Dash - double-tap WASD
+    if (input.dash && canAct && this.grounded && this.dashCooldown <= 0) {
+      const yaw = input.cameraYaw;
+      const forward_x = Math.sin(yaw);
+      const forward_z = Math.cos(yaw);
+      const right_x = -Math.cos(yaw);
+      const right_z = Math.sin(yaw);
+
+      let dx = 0, dz = 0;
+      switch (input.dash) {
+        case 'forward':  dx = forward_x;  dz = forward_z;  break;
+        case 'backward': dx = -forward_x; dz = -forward_z; break;
+        case 'left':     dx = -right_x;   dz = -right_z;   break;
+        case 'right':    dx = right_x;    dz = right_z;    break;
+      }
+
+      this.knockbackX += dx * DASH_IMPULSE_XZ;
+      this.knockbackZ += dz * DASH_IMPULSE_XZ;
+      this.velocityY = DASH_IMPULSE_Y;
+      this.grounded = false;
+      this.state = 'jumping';
+      this.dashCooldown = DASH_COOLDOWN;
+      this.dashDirection = input.dash;
+      return;
+    }
+
     // Running / idle transitions
     if (canAct) {
       const hasMovement = input.left || input.right || input.forward || input.backward;
@@ -343,6 +383,7 @@ export class Player {
       stateTimer: this.stateTimer,
       iframesRemaining: this.iframesRemaining,
       airParrying: this._airParryElapsed >= 0 && this._airParryElapsed < PARRY_WINDOW,
+      dashDirection: this.dashDirection,
     };
   }
 }

@@ -42,6 +42,10 @@ export const BLOCK_STUN = 0.15;              // block stun duration
 export const PARRY_WINDOW = 0.3;             // seconds after block starts where parry is active
 export const PARRY_PUNISH_STUN = 0.4;        // hitstun applied to attacker on parry
 
+export const DASH_IMPULSE_XZ = 30;
+export const DASH_IMPULSE_Y = 4;
+export const DASH_COOLDOWN = 1.0;
+
 export const IFRAMES_DURATION = 0.8;
 
 export const ROUND_TIME = 90;
